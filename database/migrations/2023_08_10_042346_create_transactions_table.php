@@ -17,6 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('buyer_id')->nullable();
             $table->unsignedBigInteger('product_id')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
 
             $table->foreign('product_id')->on('products')->references('id')->onDelete('set null');
             $table->foreign('buyer_id')->on('users')->references('id')->onDelete('set null');

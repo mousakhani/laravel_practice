@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('image');
             $table->unsignedBigInteger('seller_id');
             $table->timestamps();
+            $table->softDeletes();
+
 
 
             $table->foreign('seller_id')->on('users')->references('id')->onDelete('cascade');
