@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Type\Integer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserController extends Controller
 {
@@ -53,7 +54,11 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::findOrFail($id);
+        try {
+            $user = User::findOrFail($id);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
+        }
         return response()->json($user);
     }
 
@@ -62,14 +67,18 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
+        try {
+            $user = User::findOrFail($id);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
+        }
         $validator = Validator::make($request->all(), [
             // template: email:unique:table_name,column,except,idColumn
             //اخرین مقدار نام ستون ایدی است. اگر نام ستون ایدی غیر ایدی باشد، از این گزینه استفاده می کنیم
             //https://laravel.com/docs/5.2/validation#rule-unique
             'email' => 'email|unique:users,email,' . $user->id,
             'password' => 'confirmed|min:6',
-            'admin' => 'in:' . User::ADMIN_USER . ',' . User::REGULAR_USER
+            'admin' => 'in:' . User::ADMIN_USER . ',' . User::REGULAR_USER,
         ]);
 
         if ($validator->failed()) {
@@ -82,6 +91,13 @@ class UserController extends Controller
             $user->name = $request->name;
         }
 
+        if ($request->has('admin')) {
+            if (!$user->verified) {
+                return response()->json(['message' => 'Only verified users can modify the admin field', 'code' => 409], 409);
+            }
+            $user->admin = $request->admin;
+        }
+
         if ($request->has('email') && $user->email != $request->email) {
             $user->verified = User::UNVERIFIED_USER;
             $user->verification_token = User::generateVerificationCode();
@@ -92,12 +108,7 @@ class UserController extends Controller
             $user->password = bcrypt($request->password);
         }
 
-        if ($request->has('admin')) {
-            if (!$user->verified) {
-                return response()->json(['message' => 'Only verified users can modify the admin field', 'code' => 409], 409);
-            }
-            $user->admin = $request->admin;
-        }
+
 
         if (!$user->isDirty()) {
             return response()->json(['message' => 'You need to specify a different value to update', 'code' => 422], 422);
@@ -112,6 +123,12 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $user = User::findOrFail($id);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
+        }
+        $user->delete();
+        return response()->json(['data' => $user, 'code' => 200], 200);
     }
 }
