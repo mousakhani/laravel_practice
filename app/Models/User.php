@@ -67,6 +67,25 @@ class User extends Authenticatable
         $this->admin == User::ADMIN_USER;
     }
 
+    // this functions are laravel mutators.
+    //Mutators are functions that can be changed values before inserting to database
+    public function setNameAttribute($name)
+    {
+        $this->attributes['name'] = strtolower($name);
+    }
+
+    //This functions are laravel accessors.
+    // The accessor functions car be changed values after retrieve data from database
+    public function getNameAttribute($name)
+    {
+        return ucwords($name);
+    }
+
+    public function setEmailAttribute($email)
+    {
+        $this->attributes['email'] = strtolower($email);
+    }
+
     public static function generateVerificationCode()
     {
         $n = 40;

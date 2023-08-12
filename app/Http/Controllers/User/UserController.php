@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Type\Integer;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class UserController extends Controller
+class UserController extends ApiController
 {
     /**
      * Display a listing of the resource.
@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $users = User::all();
 
-        return response()->json($users);
+        return $this->showAll($users);
     }
 
     /**
@@ -46,32 +46,27 @@ class UserController extends Controller
 
         $user = User::create($data);
         // dd($user);
-        return response()->json($user, 201);
+        return $this->showOne($user, 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(User $user)
     {
-        try {
-            $user = User::findOrFail($id);
-        } catch (ModelNotFoundException $exception) {
-            return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
-        }
-        return response()->json($user);
+        // // try {
+        // $user = User::findOrFail($id);
+        // // } catch (ModelNotFoundException $exception) {
+        // //     return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
+        // // }
+        return $this->showOne($user);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $user)
     {
-        try {
-            $user = User::findOrFail($id);
-        } catch (ModelNotFoundException $exception) {
-            return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
-        }
         $validator = Validator::make($request->all(), [
             // template: email:unique:table_name,column,except,idColumn
             //اخرین مقدار نام ستون ایدی است. اگر نام ستون ایدی غیر ایدی باشد، از این گزینه استفاده می کنیم
@@ -82,9 +77,7 @@ class UserController extends Controller
         ]);
 
         if ($validator->failed()) {
-            return response()->json([
-                'data' => $validator->messages()
-            ], 400);
+            return $this->errorResponse($validator->messages(), 400);
         }
 
         if ($request->has('name')) {
@@ -93,7 +86,7 @@ class UserController extends Controller
 
         if ($request->has('admin')) {
             if (!$user->verified) {
-                return response()->json(['message' => 'Only verified users can modify the admin field', 'code' => 409], 409);
+                return $this->errorResponse('Only verified users can modify the admin field', 409);
             }
             $user->admin = $request->admin;
         }
@@ -111,24 +104,19 @@ class UserController extends Controller
 
 
         if (!$user->isDirty()) {
-            return response()->json(['message' => 'You need to specify a different value to update', 'code' => 422], 422);
+            return $this->errorResponse('You need to specify a different value to update', 422);
         }
 
         $user->save();
-        return response()->json(['data' => $user], 200);
+        return $this->showOne($user);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(User $user)
     {
-        try {
-            $user = User::findOrFail($id);
-        } catch (ModelNotFoundException $exception) {
-            return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
-        }
         $user->delete();
-        return response()->json(['data' => $user, 'code' => 200], 200);
+        return $this->showOne($user);
     }
 }
