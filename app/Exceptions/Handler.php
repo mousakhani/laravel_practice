@@ -36,8 +36,8 @@ class Handler extends ExceptionHandler
                 return response()->json(['message' => 'Buyer not found'], 404);
             if ($request->is('sellers/*'))
                 return response()->json(['message' => 'Seller not found'], 404);
-            if ($request->is('categories/*'))
-                return response()->json(['message' => 'Category not found'], 404);
+            // if ($request->is('categories/*'))
+            //     return response()->json(['message' => 'Category not found'], 404);
         });
     }
 }

@@ -20,6 +20,10 @@ class Product extends Model
         'seller_id',
     ];
 
+    protected $hidden = [
+        'pivot',
+    ];
+
     public function isAvailable()
     {
         return $this->status == Product::AVAILABLE_PRODUCT;
@@ -37,6 +41,6 @@ class Product extends Model
 
     public function transactions()
     {
-        return $this->hasToMany(Transaction::class);
+        return $this->hasMany(Transaction::class);
     }
 }
