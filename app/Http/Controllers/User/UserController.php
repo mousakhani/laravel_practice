@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Ramsey\Uuid\Type\Integer;
 
 class UserController extends Controller
 {
@@ -12,15 +15,9 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
-    }
+        $users = User::all();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return response()->json($users);
     }
 
     /**
@@ -28,7 +25,27 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            //unique:users
+            // جمله ی بالا به این معنی است که همه ی ایمیل ها را  برای همه ی یوزر ها غیر از
+            // یوزر جاری یونیک در نظر بگیر
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->messages(), 400);
+        }
+        $data = $request->all();
+        $data['password'] = bcrypt($request->password);
+        $data['verified'] = User::UNVERIFIED_USER;
+        $data['verification_token'] = User::generateVerificationCode();
+        $data['admin'] = User::REGULAR_USER;
+
+        $user = User::create($data);
+        // dd($user);
+        return response()->json($user, 201);
     }
 
     /**
@@ -36,15 +53,8 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        $user = User::findOrFail($id);
+        return response()->json($user);
     }
 
     /**
@@ -52,7 +62,49 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            // template: email:unique:table_name,column,except,idColumn
+            //اخرین مقدار نام ستون ایدی است. اگر نام ستون ایدی غیر ایدی باشد، از این گزینه استفاده می کنیم
+            //https://laravel.com/docs/5.2/validation#rule-unique
+            'email' => 'email|unique:users,email,' . $user->id,
+            'password' => 'confirmed|min:6',
+            'admin' => 'in:' . User::ADMIN_USER . ',' . User::REGULAR_USER
+        ]);
+
+        if ($validator->failed()) {
+            return response()->json([
+                'data' => $validator->messages()
+            ], 400);
+        }
+
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+
+        if ($request->has('email') && $user->email != $request->email) {
+            $user->verified = User::UNVERIFIED_USER;
+            $user->verification_token = User::generateVerificationCode();
+            $user->email = $request->email;
+        }
+
+        if ($request->has('password')) {
+            $user->password = bcrypt($request->password);
+        }
+
+        if ($request->has('admin')) {
+            if (!$user->verified) {
+                return response()->json(['message' => 'Only verified users can modify the admin field', 'code' => 409], 409);
+            }
+            $user->admin = $request->admin;
+        }
+
+        if (!$user->isDirty()) {
+            return response()->json(['message' => 'You need to specify a different value to update', 'code' => 422], 422);
+        }
+
+        $user->save();
+        return response()->json(['data' => $user], 200);
     }
 
     /**
