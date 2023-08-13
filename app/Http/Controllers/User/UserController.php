@@ -54,11 +54,6 @@ class UserController extends ApiController
      */
     public function show(User $user)
     {
-        // // try {
-        // $user = User::findOrFail($id);
-        // // } catch (ModelNotFoundException $exception) {
-        // //     return response()->json(['data' => 'User ' . $id . ' not found', "code" => 404], 404);
-        // // }
         return $this->showOne($user);
     }
 
@@ -118,5 +113,14 @@ class UserController extends ApiController
     {
         $user->delete();
         return $this->showOne($user);
+    }
+
+    public function verify($token)
+    {
+        $user = User::query()->where('verification_token', $token)->firstOrFail();
+        $user->verified = User::VERIFIED_USER;
+        $user->verification_token = null;
+        $user->save();
+        return $this->showMessage('The account has been verified successfully');
     }
 }
