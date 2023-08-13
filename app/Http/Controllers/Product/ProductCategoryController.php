@@ -20,6 +20,14 @@ class ProductCategoryController extends ApiController
     {
         return $this->showAll($product->categories);
     }
+
+    public function update(Product $product, Category $category)
+    {
+        $product->categories()->syncWithoutDetaching([$category->id]);
+
+        return $this->showOne($product->categories);
+    }
+
     public function destroy(Product $product, Category $category)
     {
         $this->checkCategory($product, $category);
