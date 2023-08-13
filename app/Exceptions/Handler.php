@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -29,15 +30,11 @@ class Handler extends ExceptionHandler
             //
         })->stop();
 
-        $this->renderable(function (Exception $exception, Request $request) {
-            if ($request->is('users/*'))
-                return response()->json(['message' => 'User not found'], 404);
-            if ($request->is('buyers/*'))
-                return response()->json(['message' => 'Buyer not found'], 404);
-            if ($request->is('sellers/*'))
-                return response()->json(['message' => 'Seller not found'], 404);
-            // if ($request->is('categories/*'))
-            //     return response()->json(['message' => 'Category not found'], 404);
+        $this->renderable(function (HttpException $exception, Request $request) {
+            return response()->json(
+                ['error' => $exception->getMessage(), 'code' => $exception->getStatusCode()],
+                $exception->getStatusCode()
+            );
         });
     }
 }

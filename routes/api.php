@@ -10,7 +10,11 @@ use App\Http\Controllers\Category\CategoryController;
 use App\Http\Controllers\Category\CategoryProductController;
 use App\Http\Controllers\Category\CategoryTransactionController;
 use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\seller\SellerBuyerController;
+use App\Http\Controllers\seller\SellerCategoryController;
 use App\Http\Controllers\Seller\SellerController;
+use App\Http\Controllers\seller\SellerProductController;
+use App\Http\Controllers\seller\SellerTransactionController;
 use App\Http\Controllers\Transaction\TransactionCategoryController;
 use App\Http\Controllers\Transaction\TransactionController;
 use App\Http\Controllers\Transaction\TransactionSellerController;
@@ -47,6 +51,10 @@ Route::resource('buyers.categories', BuyerCategoryController::class, ['only' => 
  * Sellers
  */
 Route::resource('sellers', SellerController::class, ['only' => ['index', 'show']]);
+Route::resource('sellers.transactions', SellerTransactionController::class, ['only' => ['index',]]);
+Route::resource('sellers.categories', SellerCategoryController::class, ['only' => ['index',]]);
+Route::resource('sellers.buyers', SellerBuyerController::class, ['only' => ['index',]]);
+Route::resource('sellers.products', SellerProductController::class, ['only' => ['index', 'destroy']]);
 
 /**
  * Categories
