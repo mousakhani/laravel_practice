@@ -38,10 +38,13 @@ class Handler extends ExceptionHandler
                     400
                 );
             }
-            // return response()->json(
-            //     ['error' => $exception->getMessage(), 'code' => $exception->getStatusCode()],
-            //     $exception->getStatusCode()
-            // );
+            if ($exception instanceof HttpException) {
+
+                return response()->json(
+                    ['error' => $exception->getMessage(), 'code' => $exception->getStatusCode()],
+                    $exception->getStatusCode()
+                );
+            }
         });
     }
 }
