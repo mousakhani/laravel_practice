@@ -10,13 +10,17 @@ class UserObserve
 {
     public function created($user)
     {
-        Mail::to($user)->send(new UserCreated($user));
+        retry(5, function () use ($user) {
+            Mail::to($user)->send(new UserCreated($user));
+        }, 100);
     }
 
     public function updated($user)
     {
-        if ($user->isDirty('email')) {
-            Mail::to($user)->send(new UserMailChanged($user));
-        }
+        retry(5, function () use ($user) {
+            if ($user->isDirty('email')) {
+                Mail::to($user)->send(new UserMailChanged($user));
+            }
+        }, 100);
     }
 }
