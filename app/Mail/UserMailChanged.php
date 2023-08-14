@@ -10,15 +10,16 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class UserCreated extends Mailable
+class UserMailChanged extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(public User $user,)
+    public function __construct(public User $user)
     {
+        //
     }
 
     /**
@@ -27,7 +28,7 @@ class UserCreated extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'User Created',
+            subject: 'User Change',
         );
     }
 
@@ -37,7 +38,7 @@ class UserCreated extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.verification',
+            text: 'emails.confirm',
         );
     }
 
