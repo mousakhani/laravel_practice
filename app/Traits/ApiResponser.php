@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use PhpParser\Node\Expr\Cast\Object_;
 
@@ -22,6 +23,7 @@ trait ApiResponser
     {
         $collection = $this->filterData($collection);
         $collection = $this->sortData($collection);
+        $collection = $this->paginate($collection);
         return $this->successResponse(['data' => $collection->values()], $code);
     }
 
@@ -56,5 +58,24 @@ trait ApiResponser
             }
         }
         return $collection;
+    }
+
+    protected function paginate(Collection $collection)
+    {
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 2;
+        $results = $collection->slice(($page - 1) * $perPage, $perPage)->values();
+        $paginated = new LengthAwarePaginator(
+            $results,
+            $collection->count(),
+            $perPage,
+            $page,
+            [
+                'path' => 'sdf',
+            ]
+        );
+
+        $paginated->appends(request()->all());
+        return $paginated;
     }
 }
