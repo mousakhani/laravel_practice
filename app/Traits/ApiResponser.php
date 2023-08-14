@@ -20,7 +20,8 @@ trait ApiResponser
 
     protected function showAll(Collection $collection, $code = 200)
     {
-        return $this->successResponse(['data' => $collection], $code);
+        $collection = $this->sortData($collection);
+        return $this->successResponse(['data' => $collection->values()], $code);
     }
 
     protected function showOne($model, $code = 200)
@@ -31,5 +32,17 @@ trait ApiResponser
     protected function showMessage($message, $code = 200)
     {
         return $this->successResponse(['data' => $message], $code);
+    }
+
+
+    protected function sortData(Collection $collection)
+    {
+
+        // Sorting worked based regional attributes on the models
+        if (request()->has('sort_by')) {
+            $attribute = request()->sort_by;
+            $collection = $collection->sortBy->{$attribute};
+        }
+        return $collection;
     }
 }
