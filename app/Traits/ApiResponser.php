@@ -20,6 +20,7 @@ trait ApiResponser
 
     protected function showAll(Collection $collection, $code = 200)
     {
+        $collection = $this->filterData($collection);
         $collection = $this->sortData($collection);
         return $this->successResponse(['data' => $collection->values()], $code);
     }
@@ -42,6 +43,17 @@ trait ApiResponser
         if (request()->has('sort_by')) {
             $attribute = request()->sort_by;
             $collection = $collection->sortBy->{$attribute};
+        }
+        return $collection;
+    }
+
+    protected function filterData(Collection $collection)
+    {
+        foreach (request()->query() as $query => $value) {
+            $attributes = $collection->first()->getAttributes();
+            if (array_key_exists($query, $attributes)) {
+                $collection = $collection->where($query, $value);
+            }
         }
         return $collection;
     }
