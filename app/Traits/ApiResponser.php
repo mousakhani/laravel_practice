@@ -5,6 +5,8 @@ namespace App\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use LengthException;
 use PhpParser\Node\Expr\Cast\Object_;
 
 trait ApiResponser
@@ -24,7 +26,16 @@ trait ApiResponser
         $collection = $this->filterData($collection);
         $collection = $this->sortData($collection);
         $collection = $this->paginate($collection);
-        return $this->successResponse(['data' => $collection->values()], $code);
+
+        $collection = $this->cacheResponse($collection);
+        $collection = [
+            ...$collection->toArray(),
+            'links' => [
+                'rel' => 'self',
+                'href' => route('categories.index')
+            ]
+        ];
+        return $this->successResponse(['data' => $collection], $code);
     }
 
     protected function showOne($model, $code = 200)
@@ -71,11 +82,28 @@ trait ApiResponser
             $perPage,
             $page,
             [
-                'path' => 'sdf',
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
             ]
         );
 
         $paginated->appends(request()->all());
+
         return $paginated;
+    }
+
+    protected function cacheResponse($data)
+    {
+
+        $url = request()->url();
+        $queryParams = request()->query();
+        ksort($queryParams);
+
+        $queryString = http_build_query($queryParams);
+
+        $fullUrl = "{$url}?{$queryString}";
+
+        return Cache::remember($fullUrl, 10, function () use ($data) {
+            return $data;
+        });
     }
 }
